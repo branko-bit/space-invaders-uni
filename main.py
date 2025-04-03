@@ -1,108 +1,83 @@
 import pygame
-import time  # Import time module for tracking firing rate
+import sys
+import subprocess  # Import subprocess to run the main.py script
 
-#init pygame
+# Initialize pygame
 pygame.init()
 
-#game window
-screen = pygame.display.set_mode((800, 700))  #width: x, height: y
-pygame.display.set_caption("Space Invaders")
+# Screen dimensions
+SCREEN_WIDTH = 800
+SCREEN_HEIGHT = 700
 
-#load backgorund image
-background = pygame.image.load('Images/background.jpg')
+# Colors
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+GRAY = (200, 200, 200)
 
-#load spaceship image
-spaceship = pygame.image.load('Images/spaceship.png').convert_alpha()
-spaceship = pygame.transform.scale(spaceship, (50, 50))  #50x50 pixels 
-spaceship_width = spaceship.get_width()
-spaceship_height = spaceship.get_height()
+# Fonts
+pygame.font.init()
+TITLE_FONT = pygame.font.Font(None, 74)
+BUTTON_FONT = pygame.font.Font(None, 36)
 
-#inital spaceship position
-spaceship_x = (800 - spaceship_width) // 2 #center horizontally
-spaceship_y = 700 - spaceship_height - 10  # place near bottom of screen
+# Create the screen
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+pygame.display.set_caption("Space Invaders - Main Menu")
 
-#space ship movement speed
-spaceship_speed = .5
+# Load images for buttons
+settings_icon = pygame.image.load("Images/settings_icon.png").convert_alpha()  # Replace with your actual image path
+exit_icon = pygame.image.load("Images/exit_icon.png").convert_alpha()          # Replace with your actual image path
 
-#active projectiles list
-projectiles = []
+# Scale images to fit buttons
+settings_icon = pygame.transform.scale(settings_icon, (50, 50))
+exit_icon = pygame.transform.scale(exit_icon, (50, 50))
 
-#projectiles settings
-projectile_size = 60 # 9x9 pixel size
-projectile_speed = .7
+background_image = pygame.image.load("Images/background.jpg").convert()
 
-#load projectile image + resize 
-projectile_image = pygame.image.load('Images/projectiles.png').convert_alpha()
-projectile_image = pygame.transform.scale(projectile_image, (projectile_size, projectile_size))
-projectile_image = pygame.transform.rotate(projectile_image, 180)
+def draw_text(text, font, color, surface, x, y):
+    """Helper function to draw text on the screen."""
+    text_obj = font.render(text, True, color)
+    text_rect = text_obj.get_rect(center=(x, y))
+    surface.blit(text_obj, text_rect)
 
-#firing rate
-last_fired = 0  #timestamp last fired
-fire_rate = 0.3  #space between firing 
+def main_menu():
+    """Main menu loop."""
+    while True:
+        # Draw the background image
+        screen.blit(background_image, (0, 0))  # Use blit to draw the image at the top-left corner
 
-#background starting position
-background_y1 = 0
-background_y2 = -background.get_height()
+        # Draw title
+        draw_text("Space Invaders", TITLE_FONT, WHITE, screen, SCREEN_WIDTH // 2, 100)
 
-# main game loop
-running = True
-while running:
-    #backgorund movement speed setting
-    scroll_speed = 0.3
-    background_y1 += scroll_speed
-    background_y2 += scroll_speed
+        # Draw buttons
+        play_button = pygame.Rect(SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT // 2 - 25, 200, 50)
+        settings_button_rect = pygame.Rect(20, 20, 50, 50)
+        exit_button_rect = pygame.Rect(20, 80, 50, 50)
 
-    #resetting background image for movement effect
-    if background_y1 >= background.get_height():
-        background_y1 = -background.get_height()
-    if background_y2 >= background.get_height():
-        background_y2 = -background.get_height()
+        pygame.draw.rect(screen, GRAY, play_button)
+        draw_text("Play Game", BUTTON_FONT, BLACK, screen, play_button.centerx, play_button.centery)
 
-    screen.blit(background, (0, background_y1))
-    screen.blit(background, (0, background_y2))
+        # Draw icons for settings and exit
+        screen.blit(settings_icon, (settings_button_rect.x, settings_button_rect.y))
+        screen.blit(exit_icon, (exit_button_rect.x, exit_button_rect.y))
 
-    #getting pressed keys input
-    keys = pygame.key.get_pressed()
+        # Event handling
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if play_button.collidepoint(event.pos):
+                    print("Play Game clicked!")
+                    # Run main.py to start the game
+                    subprocess.Popen(["python", "main.py"], shell=True)
+                elif settings_button_rect.collidepoint(event.pos):
+                    print("Settings clicked!")
+                    # Add logic to open settings
+                elif exit_button_rect.collidepoint(event.pos):
+                    pygame.quit()
+                    sys.exit()
 
-    #projectiles firing
-    if keys[pygame.K_SPACE]:
-        current_time = time.time()
-        if current_time - last_fired >= fire_rate:  #check if enough time has passed
-            #adding new projectile at spaceship coordinates
-            projectiles.append([spaceship_x + spaceship_width // 2 - projectile_size // 2, spaceship_y])
-            last_fired = current_time
+        pygame.display.flip()
 
-    #updating projectile positions
-    for projectile in projectiles:
-        projectile[1] -= projectile_speed  #moving up
-
-    #removing projectiles that are no longer visible
-    projectiles = [p for p in projectiles if p[1] > 0]
-
-    #showing projectiles
-    for projectile in projectiles:
-        screen.blit(projectile_image, (projectile[0], projectile[1]))
-
-    #moving spaceship with wasd
-    if keys[pygame.K_w] and spaceship_y > 700 // 2:  #restrict movement to lower 50% of screen
-        spaceship_y -= spaceship_speed
-    if keys[pygame.K_s] and spaceship_y < 700 - spaceship_height:
-        spaceship_y += spaceship_speed
-    if keys[pygame.K_a] and spaceship_x > 0:
-        spaceship_x -= spaceship_speed
-    if keys[pygame.K_d] and spaceship_x < 800 - spaceship_width:
-        spaceship_x += spaceship_speed
-
-    #showing spaceship image
-    screen.blit(spaceship, (spaceship_x, spaceship_y))
-
-    #event handling for game quiting
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-
-    #updating the display
-    pygame.display.update()
-
-#closing game
-pygame.quit()
+if __name__ == "__main__":
+    main_menu()
