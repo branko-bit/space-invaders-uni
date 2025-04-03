@@ -28,9 +28,13 @@ spaceship_speed = .5
 projectiles = []
 
 #projectiles settings
-projectile_size = 9 # 9x9 pixel size
-projectile_color = (255, 0, 0)
+projectile_size = 60 # 9x9 pixel size
 projectile_speed = .7
+
+#load projectile image + resize 
+projectile_image = pygame.image.load('Images/projectiles.png').convert_alpha()
+projectile_image = pygame.transform.scale(projectile_image, (projectile_size, projectile_size))
+projectile_image = pygame.transform.rotate(projectile_image, 180)
 
 #firing rate
 last_fired = 0  #timestamp last fired
@@ -75,9 +79,9 @@ while running:
     #removing projectiles that are no longer visible
     projectiles = [p for p in projectiles if p[1] > 0]
 
-    #projectile showing
+    #showing projectiles
     for projectile in projectiles:
-        pygame.draw.rect(screen, projectile_color, (projectile[0], projectile[1], projectile_size, projectile_size))
+        screen.blit(projectile_image, (projectile[0], projectile[1]))
 
     #moving spaceship with wasd
     if keys[pygame.K_w] and spaceship_y > 700 // 2:  #restrict movement to lower 50% of screen
