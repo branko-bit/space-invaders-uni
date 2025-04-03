@@ -1,4 +1,5 @@
 import pygame
+import time  # Import time module for tracking firing rate
 
 #init pygame
 pygame.init()
@@ -23,6 +24,22 @@ spaceship_y = 700 - spaceship_height - 10  # place near bottom of screen
 #space ship movement speed
 spaceship_speed = .5
 
+#active projectiles list
+projectiles = []
+
+#projectiles settings
+projectile_size = 60 # 9x9 pixel size
+projectile_speed = .7
+
+#load projectile image + resize 
+projectile_image = pygame.image.load('Images/projectiles.png').convert_alpha()
+projectile_image = pygame.transform.scale(projectile_image, (projectile_size, projectile_size))
+projectile_image = pygame.transform.rotate(projectile_image, 180)
+
+#firing rate
+last_fired = 0  #timestamp last fired
+fire_rate = 0.3  #space between firing 
+
 #background starting position
 background_y1 = 0
 background_y2 = -background.get_height()
@@ -46,6 +63,25 @@ while running:
 
     #getting pressed keys input
     keys = pygame.key.get_pressed()
+
+    #projectiles firing
+    if keys[pygame.K_SPACE]:
+        current_time = time.time()
+        if current_time - last_fired >= fire_rate:  #check if enough time has passed
+            #adding new projectile at spaceship coordinates
+            projectiles.append([spaceship_x + spaceship_width // 2 - projectile_size // 2, spaceship_y])
+            last_fired = current_time
+
+    #updating projectile positions
+    for projectile in projectiles:
+        projectile[1] -= projectile_speed  #moving up
+
+    #removing projectiles that are no longer visible
+    projectiles = [p for p in projectiles if p[1] > 0]
+
+    #showing projectiles
+    for projectile in projectiles:
+        screen.blit(projectile_image, (projectile[0], projectile[1]))
 
     #moving spaceship with wasd
     if keys[pygame.K_w] and spaceship_y > 700 // 2:  #restrict movement to lower 50% of screen
