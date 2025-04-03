@@ -69,7 +69,7 @@ def main_menu():
                 if play_button.collidepoint(event.pos):
                     print("Play Game clicked!")
                     # Run main.py to start the game
-                    subprocess.Popen(["python", "main.py"], shell=True)
+                    subprocess.Popen(["python", "game.py"], shell=True)
                 elif settings_button_rect.collidepoint(event.pos):
                     print("Settings clicked!")
                     # Add logic to open settings
