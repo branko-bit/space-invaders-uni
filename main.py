@@ -34,7 +34,7 @@ projectile_speed = .7
 
 #firing rate
 last_fired = 0  #timestamp last fired
-fire_rate = 0.3  #space between firing
+fire_rate = 0.3  #space between firing 
 
 #background starting position
 background_y1 = 0
