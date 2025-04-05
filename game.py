@@ -1,5 +1,7 @@
 import pygame
 import time  # Import time module for tracking firing rate
+import subprocess
+from pause import pause_menu   # Import the pause_menu function
 
 #init pygame
 pygame.init()
@@ -44,11 +46,10 @@ fire_rate = 0.3  #space between firing
 background_y1 = 0
 background_y2 = -background.get_height()
 
-# main game loop
 running = True
 while running:
     #backgorund movement speed setting
-    scroll_speed = 0.3
+    scroll_speed = 0.1
     background_y1 += scroll_speed
     background_y2 += scroll_speed
 
@@ -92,6 +93,9 @@ while running:
         spaceship_x -= spaceship_speed
     if keys[pygame.K_d] and spaceship_x < 800 - spaceship_width:
         spaceship_x += spaceship_speed
+    if keys[pygame.K_ESCAPE]:
+        pause_menu(screen)  # Call the pause menu and pass the screen
+        continue  # Resume the game loop after the pause menu is closed
 
     #showing spaceship image
     screen.blit(spaceship, (spaceship_x, spaceship_y))
