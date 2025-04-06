@@ -1,7 +1,7 @@
 import pygame
 import sys
 import subprocess  # Import subprocess to run the main.py script
-
+import game
 # Initialize pygame
 pygame.init()
 
@@ -69,7 +69,8 @@ def main_menu():
                 if play_button.collidepoint(event.pos):
                     print("Play Game clicked!")
                     # Run main.py to start the game
-                    subprocess.Popen(["python", "game.py"], shell=True)
+                    #subprocess.Popen(["python", "game.py"], shell=True)
+                    game.game()
                 elif settings_button_rect.collidepoint(event.pos):
                     print("Settings clicked!")
                     # Add logic to open settings

@@ -1,6 +1,7 @@
 import pygame
 import sys
 import subprocess  # Import subprocess to run the main.py script
+import main
 
 # Initialize pygame
 pygame.init()
@@ -67,8 +68,7 @@ def pause_menu(screen):
                     print("Settings clicked!")
                     # Add logic to open settings
                 elif main_menu_button.collidepoint(event.pos):
-                    pygame.quit()
-                    sys.exit()
+                    main.main_menu()  # Call the main menu function from main.py
 
         pygame.display.flip()
 
