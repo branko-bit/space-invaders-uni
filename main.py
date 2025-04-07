@@ -24,8 +24,8 @@ screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("Space Invaders - Main Menu")
 
 # Load images for buttons
-settings_icon = pygame.image.load("Images/settings_icon.png").convert_alpha()  # Replace with your actual image path
-exit_icon = pygame.image.load("Images/exit_icon.png").convert_alpha()          # Replace with your actual image path
+settings_icon = pygame.image.load("Images/settings_icon.png").convert_alpha()
+exit_icon = pygame.image.load("Images/exit_icon.png").convert_alpha()
 
 # Scale images to fit buttons
 settings_icon = pygame.transform.scale(settings_icon, (50, 50))
