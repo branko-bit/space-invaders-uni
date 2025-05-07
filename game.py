@@ -155,7 +155,7 @@ def game():
                 enemy_projectiles.append([enemy[0], enemy[1] + 10])  # Adjust projectile position closer to the enemy
                 enemy_fire_intervals[i] = current_time + random.uniform(2, 4)  # Reset random fire time
 
-        # Update enemy projectile positions
+        # Update enemy projectile positionsa
         for projectile in enemy_projectiles:
             projectile[1] += projectile_speed  # Move downward
 
