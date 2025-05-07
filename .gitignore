@@ -1,2 +1,3 @@
 # Ignore the .vs directory
 .vs/
+__pycache__/

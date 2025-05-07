@@ -2,6 +2,7 @@ import pygame
 import time  # Import time module for tracking firing rate
 import subprocess
 from pause import pause_menu   # Import the pause_menu function
+import random  # Import random for enemy spawn positions
 
 def game():
     #init pygame
@@ -14,6 +15,7 @@ def game():
     #load backgorund image
     background = pygame.image.load('Images/background.jpg')
 
+    #--------------PLAYER SECTION-----------------
     #load spaceship image
     spaceship = pygame.image.load('Images/spaceship.png').convert_alpha()
     spaceship = pygame.transform.scale(spaceship, (50, 50))  #50x50 pixels 
@@ -46,6 +48,24 @@ def game():
     #background starting position
     background_y1 = 0
     background_y2 = -background.get_height()
+
+    #---------------ENEMY SECTION------------------
+    # Enemy settings
+    enemy_image = pygame.image.load('Images/enemy.png').convert_alpha()
+    enemy_image = pygame.transform.scale(enemy_image, (50, 50))
+    enemies = []
+    enemy_spawn_rate = 3  # spawn rate v sekundah
+    last_enemy_spawn = 0  # Timestamp of the last enemy spawn
+    enemy_speed_range = (0.05, 0.2)  # Random speed range for movement
+    enemy_direction_change_rate = 1.0  # Change direction every 1 second
+    last_direction_change = 0  # Timestamp of the last direction change
+    enemy_projectile_size = 7
+
+    # Enemy projectile settings
+    enemy_projectile_image = pygame.image.load('Images/enemy_laser.png').convert_alpha()
+    enemy_projectile_image = pygame.transform.scale(enemy_projectile_image, (enemy_projectile_size, enemy_projectile_size*4))
+    enemy_projectiles = []  # List to store enemy projectiles
+    enemy_fire_intervals = {}  # Dictionary to track random fire intervals for each enemy
 
     running = True
     while running:
@@ -100,6 +120,55 @@ def game():
 
         #showing spaceship image
         screen.blit(spaceship, (spaceship_x, spaceship_y))
+
+        #-----------------ENEMY SECTION-----------------
+        current_time = time.time()
+        if current_time - last_enemy_spawn >= enemy_spawn_rate and len(enemies) < 5:
+            enemy_x = random.randint(0, 800 - 50)  # Random x position within screen width
+            enemy_y = random.randint(0, int(700 * 0.3) - 50)  # Random y position within the top 30% of the screen
+            enemy_dx = random.uniform(*enemy_speed_range) * random.choice([-1, 1])  # Random horizontal speed
+            enemy_dy = random.uniform(*enemy_speed_range) * random.choice([-1, 1])  # Random vertical speed
+            enemies.append([enemy_x, enemy_y, enemy_dx, enemy_dy])  # Add enemy with movement speeds
+            enemy_fire_intervals[len(enemies) - 1] = current_time + random.uniform(1, 3)  # Set random fire time
+            last_enemy_spawn = current_time
+
+        # Update enemy positions
+        if current_time - last_direction_change >= enemy_direction_change_rate:
+            for enemy in enemies:
+                enemy[2] = random.uniform(*enemy_speed_range) * random.choice([-1, 1])  # Change horizontal speed
+                enemy[3] = random.uniform(*enemy_speed_range) * random.choice([-1, 1])  # Change vertical speed
+            last_direction_change = current_time
+
+        for enemy in enemies:
+            enemy[0] += enemy[2]  # Move enemy horizontally
+            enemy[1] += enemy[3]  # Move enemy vertically
+
+            # Keep enemies within the top 30% of the screen
+            if enemy[0] <= 0 or enemy[0] >= 800 - 50:
+                enemy[2] = -enemy[2]  # Reverse horizontal direction if hitting screen edges
+            if enemy[1] <= 0 or enemy[1] >= 700 * 0.3 - 50:
+                enemy[3] = -enemy[3]  # Reverse vertical direction if hitting top or bottom bounds
+
+        # Enemies fire projectiles at random intervals
+        for i, enemy in enumerate(enemies):
+            if i in enemy_fire_intervals and current_time >= enemy_fire_intervals[i]:
+                enemy_projectiles.append([enemy[0], enemy[1] + 10])  # Adjust projectile position closer to the enemy
+                enemy_fire_intervals[i] = current_time + random.uniform(2, 4)  # Reset random fire time
+
+        # Update enemy projectile positions
+        for projectile in enemy_projectiles:
+            projectile[1] += projectile_speed  # Move downward
+
+        # Remove enemy projectiles that move off-screen
+        enemy_projectiles = [p for p in enemy_projectiles if p[1] < 700]
+
+        # Draw enemies
+        for enemy in enemies:
+            screen.blit(enemy_image, (enemy[0], enemy[1]))
+
+        # Draw enemy projectiles
+        for projectile in enemy_projectiles:
+            screen.blit(enemy_projectile_image, (projectile[0], projectile[1]))
 
         #event handling for game quiting
         for event in pygame.event.get():
