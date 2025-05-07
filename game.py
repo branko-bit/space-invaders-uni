@@ -80,6 +80,14 @@ def game():
     high_score = 0
     score_font = pygame.font.Font(None, 36)  # Font for displaying the high score
 
+
+    # Shield necessary settings
+    shield_hits_needed = 4
+    shield_hit_counter = 0
+    shield_active = False
+    shield_image = pygame.image.load('Images/shield.png').convert_alpha()
+    shield_image = pygame.transform.scale(shield_image, (60, 60))  # slightly larger than ship
+
     running = True
     while running:
         #backgorund movement speed setting
@@ -107,7 +115,12 @@ def game():
                 projectiles.append([spaceship_x + spaceship_width // 2 - projectile_size // 2, spaceship_y])
                 last_fired = current_time
                 rocket_count -= 1  # Deduct one rocket
-
+        
+        #shield activation
+        if keys[pygame.K_f] and shield_hit_counter >= shield_hits_needed and not shield_active:
+            shield_active = True
+            shield_hit_counter = 0  # Reset counter after activation
+        
         #updating projectile positions
         for projectile in projectiles:
             projectile[1] -= projectile_speed  #moving up
@@ -134,6 +147,10 @@ def game():
 
         #showing spaceship image
         screen.blit(spaceship, (spaceship_x, spaceship_y))
+
+        # showing shield if active
+        if shield_active:
+            screen.blit(shield_image, (spaceship_x - 5, spaceship_y - 5))  # Adjust for alignment
 
         #-----------------ENEMY SECTION-----------------
         current_time = time.time()
@@ -170,6 +187,7 @@ def game():
                 # Increase the hitbox by expanding the collision area
                 if enemy[0] - 10 < projectile[0] < enemy[0] + 60 and enemy[1] - 10 < projectile[1] < enemy[1] + 60:
                     enemy[4] -= 10  # Reduce enemy HP by 10
+                    shield_hit_counter += 1  # Count successful hits for shield activation
                     projectiles.remove(projectile)  # Remove the projectile
                     if enemy[4] <= 0:  # If enemy HP reaches 0, remove the enemy
                         enemies.remove(enemy)
@@ -205,7 +223,10 @@ def game():
         # Detect collisions between enemy projectiles and the player
         for projectile in enemy_projectiles[:]:
             if spaceship_x < projectile[0] < spaceship_x + spaceship_width and spaceship_y < projectile[1] < spaceship_y + spaceship_height:
-                player_hp -= 10  # Reduce player HP by 10
+                if shield_active:
+                    shield_active = False  # Absorb one hit due to shield activation
+                else:
+                    player_hp -= 10  # Reduce player HP by 10
                 enemy_projectiles.remove(projectile)  # Remove the projectile
 
         # If player HP reaches 0, stop the game and show the "Game Over" screen
@@ -228,6 +249,15 @@ def game():
         # Draw rocket count at the top-right corner
         rocket_text = rocket_font.render(f"Rockets: {rocket_count}", True, (255, 255, 255))  # White text
         screen.blit(rocket_text, (800 - 150, 20))  # Position at top-right corner
+        
+        # Draw shield status at the top-left corner
+        if shield_active:
+            shield_text = rocket_font.render("Shield: Active", True, (0, 191, 255))  # Deep Sky Blue
+        elif shield_hit_counter >= 4:
+            shield_text = rocket_font.render("Shield is ready! Press F to activate", True, (0, 191, 255))
+        else:
+            shield_text = rocket_font.render(f"Shield: {shield_hit_counter}/4", True, (0, 191, 255))
+        screen.blit(shield_text, (20, 20))  # Top-left corner
 
         # If rocket count is 0, display a warning message
         if rocket_count == 0:
