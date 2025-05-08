@@ -26,6 +26,9 @@ exit_icon = pygame.transform.scale(exit_icon, (50, 50))
 
 background_image = pygame.image.load("Images/background.jpg").convert()
 
+# Load button click sound
+button_click_sound = pygame.mixer.Sound('Sounds/button_click.wav')
+
 def draw_text(text, font, color, surface, x, y):
     text_obj = font.render(text, True, color)
     text_rect = text_obj.get_rect(center=(x, y))
@@ -53,11 +56,14 @@ def main_menu():
                 sys.exit()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if play_button.collidepoint(event.pos):
+                    button_click_sound.play()  # Play button click sound
                     print("Play Game clicked!")
                     game.game()
                 elif settings_button_rect.collidepoint(event.pos):
+                    button_click_sound.play()  # Play button click sound
                     print("Settings clicked!")
                 elif exit_button_rect.collidepoint(event.pos):
+                    button_click_sound.play()  # Play button click sound
                     pygame.quit()
                     sys.exit()
 
