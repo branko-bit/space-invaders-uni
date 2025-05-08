@@ -24,6 +24,7 @@ BUTTON_FONT = pygame.font.Font(None, 36)
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("Space Invaders - Pause Menu")
 
+button_click_sound = pygame.mixer.Sound('Sounds/button_click.wav')
 
 background_image = pygame.image.load("Images/background.jpg").convert()
 
@@ -61,13 +62,16 @@ def pause_menu(screen):
                 sys.exit()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if continue_button.collidepoint(event.pos):
+                    button_click_sound.play()  # Play button click sound
                     print("Continue clicked!")
                     # Resume game.py to start the game
                     return  # Exit the pause menu loop
                 elif settings_button.collidepoint(event.pos):
+                    button_click_sound.play()  # Play button click sound
                     print("Settings clicked!")
                     # Add logic to open settings
                 elif main_menu_button.collidepoint(event.pos):
+                    button_click_sound.play()  # Play button click sound
                     main.main_menu()  # Call the main menu function from main.py
 
         pygame.display.flip()

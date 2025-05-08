@@ -6,7 +6,6 @@ import random  # Import random for enemy spawn positions
 from game_over_screen import game_over_screen
 
 def game():
-    #init pygame
     pygame.init()
 
     #game window
@@ -45,6 +44,11 @@ def game():
     #firing rate
     last_fired = 0  #timestamp last fired
     fire_rate = 0.3  #space between firing 
+
+    # Load blaster sound
+    blaster_sound = pygame.mixer.Sound('Sounds/blaster_sound.wav')
+    # Load button click sound
+    button_click_sound = pygame.mixer.Sound('Sounds/button_click.wav')
 
     #background starting position
     background_y1 = 0
@@ -112,6 +116,7 @@ def game():
             if current_time - last_fired >= fire_rate:  #check if enough time has passed
                 #adding new projectile at spaceship coordinates
                 projectiles.append([spaceship_x + spaceship_width // 2 - projectile_size // 2, spaceship_y])
+                blaster_sound.play()  # Play blaster sound
                 last_fired = current_time
                 rocket_count -= 1  # Deduct one rocket
         
@@ -141,6 +146,7 @@ def game():
         if keys[pygame.K_d] and spaceship_x < 800 - spaceship_width:
             spaceship_x += spaceship_speed
         if keys[pygame.K_ESCAPE]:
+            button_click_sound.play()
             pause_menu(screen)  # Call the pause menu and pass the screen
             continue  # Resume the game loop after the pause menu is closed
 
