@@ -82,8 +82,7 @@ def game():
 
 
     # Shield necessary settings
-    shield_hits_needed = 4
-    shield_hit_counter = 0
+    shield_kill_counter = 0
     shield_active = False
     shield_image = pygame.image.load('Images/shield.png').convert_alpha()
     shield_image = pygame.transform.scale(shield_image, (60, 60))  # slightly larger than ship
@@ -117,9 +116,9 @@ def game():
                 rocket_count -= 1  # Deduct one rocket
         
         #shield activation
-        if keys[pygame.K_f] and shield_hit_counter >= shield_hits_needed and not shield_active:
+        if keys[pygame.K_f] and shield_kill_counter >= 4 and not shield_active:
             shield_active = True
-            shield_hit_counter = 0  # Reset counter after activation
+            shield_kill_counter = 0 # Reset the counter after activation
         
         #updating projectile positions
         for projectile in projectiles:
@@ -187,12 +186,15 @@ def game():
                 # Increase the hitbox by expanding the collision area
                 if enemy[0] - 10 < projectile[0] < enemy[0] + 60 and enemy[1] - 10 < projectile[1] < enemy[1] + 60:
                     enemy[4] -= 10  # Reduce enemy HP by 10
-                    shield_hit_counter += 1  # Count successful hits for shield activation
                     projectiles.remove(projectile)  # Remove the projectile
                     if enemy[4] <= 0:  # If enemy HP reaches 0, remove the enemy
                         enemies.remove(enemy)
                         high_score += 10  # Increase high score by 10
                         rocket_count += 4  # Award 4 rockets for killing an enemy
+                        if not shield_active:
+                            shield_kill_counter += 1
+                            if shield_kill_counter > 4:
+                                shield_kill_counter = 4  # Cap the counter at 4
                     break
 
         # Draw enemies and their health bars
@@ -253,10 +255,10 @@ def game():
         # Draw shield status at the top-left corner
         if shield_active:
             shield_text = rocket_font.render("Shield: Active", True, (0, 191, 255))  # Deep Sky Blue
-        elif shield_hit_counter >= 4:
+        elif shield_kill_counter >= 4:
             shield_text = rocket_font.render("Shield is ready! Press F to activate", True, (0, 191, 255))
         else:
-            shield_text = rocket_font.render(f"Shield: {shield_hit_counter}/4", True, (0, 191, 255))
+            shield_text = rocket_font.render(f"Shield: {shield_kill_counter}/4", True, (0, 191, 255))
         screen.blit(shield_text, (20, 20))  # Top-left corner
 
         # If rocket count is 0, display a warning message
