@@ -91,6 +91,16 @@ def game():
     shield_image = pygame.image.load('Images/shield.png').convert_alpha()
     shield_image = pygame.transform.scale(shield_image, (60, 60))  # slightly larger than ship
 
+    # Load health orb image
+    health_orb_image = pygame.image.load('Images/health.png').convert_alpha()
+    health_orb_image = pygame.transform.scale(health_orb_image, (50, 50))  # Bigger orb
+    health_orbs = []  # List to store active health orbs
+
+    # Load heal sound
+    heal_sound = pygame.mixer.Sound('Sounds/heal_sound.wav')
+
+    enemies_destroyed = 0  # Counter for destroyed enemies
+
     running = True
     while running:
         #backgorund movement speed setting
@@ -201,7 +211,28 @@ def game():
                             shield_kill_counter += 1
                             if shield_kill_counter > 4:
                                 shield_kill_counter = 4  # Cap the counter at 4
+                        # Health orb drop logic
+                        enemies_destroyed += 1
+                        if enemies_destroyed % 3 == 0:
+                            # Drop a health orb at the enemy's position
+                            health_orbs.append([enemy[0] + 10, enemy[1] + 10])
                     break
+
+        # Update and draw health orbs
+        for orb in health_orbs:
+            orb[1] += 0.08  # Slower descent speed
+
+        # Check for collision between player and health orbs
+        for orb in health_orbs[:]:
+            if (spaceship_x < orb[0] < spaceship_x + spaceship_width and
+                spaceship_y < orb[1] < spaceship_y + spaceship_height):
+                player_hp = min(player_hp + 10, 100)  # Heal 10 HP, max 100
+                heal_sound.play()  # Play heal sound
+                health_orbs.remove(orb)
+
+        # Draw health orbs
+        for orb in health_orbs:
+            screen.blit(health_orb_image, (orb[0], orb[1]))
 
         # Draw enemies and their health bars
         for enemy in enemies:
