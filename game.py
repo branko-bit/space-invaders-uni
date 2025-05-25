@@ -59,7 +59,7 @@ def game():
     hp_font = pygame.font.Font(None, 36)  # Font for displaying HP
 
     # Player Rockets
-    rocket_count = 10
+    rocket_count = 25 # Initial rocket count
     rocket_font = pygame.font.Font(None, 36)  # Font for displaying rocket count
 
     #---------------ENEMY SECTION------------------
@@ -90,11 +90,21 @@ def game():
     shield_active = False
     shield_image = pygame.image.load('Images/shield.png').convert_alpha()
     shield_image = pygame.transform.scale(shield_image, (60, 60))  # slightly larger than ship
-
+    
     # Load health orb image
     health_orb_image = pygame.image.load('Images/health.png').convert_alpha()
     health_orb_image = pygame.transform.scale(health_orb_image, (50, 50))  # Bigger orb
     health_orbs = []  # List to store active health orbs
+    
+    # Load ammo drop image
+    ammo_drop_image = pygame.image.load('Images/ammo_drop.png').convert_alpha()
+    ammo_drop_image = pygame.transform.scale(ammo_drop_image, (50, 50))
+    ammo_sound = pygame.mixer.Sound('Sounds/ammo_pickup_sfx.mp3')
+    ammo_drops = []
+    ammo_drop_spawn_rate = 10  # seconds between possible spawns
+    last_ammo_drop_spawn = 0
+    ammo_drop_speed = 0.1
+    ammo_drop_spawn_chance = 0.35; # 35%
 
     # Load heal sound
     heal_sound = pygame.mixer.Sound('Sounds/heal_sound.wav')
@@ -179,6 +189,13 @@ def game():
             enemy_fire_intervals[len(enemies) - 1] = current_time + random.uniform(1, 3)  # Set random fire time
             last_enemy_spawn = current_time
 
+        # Ammo drop spawning
+        if current_time - last_ammo_drop_spawn >= ammo_drop_spawn_rate:
+            if random.random() < ammo_drop_spawn_chance:  # % chance to spawn each interval
+                ammo_x = random.randint(0, 800 - 50)
+                ammo_drops.append([ammo_x, 0])  # Start at top of screen
+            last_ammo_drop_spawn = current_time
+
         # Update enemy positions
         if current_time - last_direction_change >= enemy_direction_change_rate:
             for enemy in enemies:
@@ -222,6 +239,10 @@ def game():
         for orb in health_orbs:
             orb[1] += 0.08  # Slower descent speed
 
+        # Update ammo drops
+        for drop in ammo_drops:
+            drop[1] += ammo_drop_speed  # Move down
+
         # Check for collision between player and health orbs
         for orb in health_orbs[:]:
             if (spaceship_x < orb[0] < spaceship_x + spaceship_width and
@@ -230,9 +251,23 @@ def game():
                 heal_sound.play()  # Play heal sound
                 health_orbs.remove(orb)
 
+        # Check for collision between player and ammo drops
+        for drop in ammo_drops[:]:
+            if (spaceship_x < drop[0] < spaceship_x + spaceship_width and
+                spaceship_y < drop[1] < spaceship_y + spaceship_height):
+                rocket_count += random.randint(5, 15)
+                ammo_sound.play()
+                ammo_drops.remove(drop)
+            elif drop[1] > 700:
+                ammo_drops.remove(drop)  # Remove if off screen
+
         # Draw health orbs
         for orb in health_orbs:
             screen.blit(health_orb_image, (orb[0], orb[1]))
+
+        # Draw ammo drops
+        for drop in ammo_drops:
+            screen.blit(ammo_drop_image, (drop[0], drop[1]))
 
         # Draw enemies and their health bars
         for enemy in enemies:
