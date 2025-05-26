@@ -6,6 +6,8 @@ import random  # Import random for enemy spawn positions
 from game_over_screen import game_over_screen
 
 #spaceship sound by Knoplund on freesound.org
+#space sound by VABsounds on freesound.org
+#boss laugh sound by supersound23 on freesound.org
 #other sounds forgot to credit, sorry :(
 
 def game():
@@ -87,6 +89,10 @@ def game():
     high_score = 0
     score_font = pygame.font.Font(None, 36)  # Font for displaying the high score
 
+    # Background music
+    pygame.mixer.music.load('Sounds/background.wav')  # Dodaj svojo glasbeno datoteko v Sounds/
+    pygame.mixer.music.set_volume(0.1)  # Max volume
+    pygame.mixer.music.play(-1)  # Loop indefinitely
 
     # Shield necessary settings
     shield_kill_counter = 0
@@ -127,6 +133,9 @@ def game():
     boss_projectile_image = pygame.transform.scale(enemy_projectile_image, (boss_projectile_size*1.5, boss_projectile_size*3))
     boss_spawned_at = 0
     boss_last_shot = 0  # <-- dodano za boss cooldown
+
+    # Load boss spawn sound
+    boss_spawn_sound = pygame.mixer.Sound('Sounds/boss-spawn.wav')
 
     running = True
     while running:
@@ -330,6 +339,7 @@ def game():
             boss_active = True
             boss_spawned_at = enemies_destroyed
             boss_last_shot = time.time()  # reset cooldown
+            boss_spawn_sound.play()  # Play boss spawn sound
 
         # Boss movement and drawing
         if boss_active and boss:
@@ -393,6 +403,7 @@ def game():
             boss_active = False
             boss = None
             boss_projectiles.clear()
+            pygame.mixer.music.stop()  # Stop the background music
             game_over_screen(screen, high_score)
             return
 
