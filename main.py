@@ -29,12 +29,18 @@ background_image = pygame.image.load("Images/background.jpg").convert()
 # Load button click sound
 button_click_sound = pygame.mixer.Sound('Sounds/button_click.wav')
 
+# Load and play menu music (loop)
+pygame.mixer.music.load('Sounds/main-menu.wav')  # Dodaj svojo glasbeno datoteko v Sounds/
+pygame.mixer.music.set_volume(1.0)  # Set to maximum volume (100%)
+pygame.mixer.music.play(-1)  # Loop indefinitely
+
 def draw_text(text, font, color, surface, x, y):
     text_obj = font.render(text, True, color)
     text_rect = text_obj.get_rect(center=(x, y))
     surface.blit(text_obj, text_rect)
 
 def main_menu():
+    menu_music_playing = True  # Flag to track if menu music is playing
     while True:
         screen.blit(background_image, (0, 0)) 
 
@@ -52,18 +58,28 @@ def main_menu():
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                pygame.mixer.music.stop()
                 pygame.quit()
                 sys.exit()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if play_button.collidepoint(event.pos):
-                    button_click_sound.play()  # Play button click sound
+                    button_click_sound.play()
+                    if menu_music_playing:
+                        pygame.mixer.music.stop()
+                        menu_music_playing = False
                     print("Play Game clicked!")
                     game.game()
                 elif settings_button_rect.collidepoint(event.pos):
-                    button_click_sound.play()  # Play button click sound
+                    button_click_sound.play()
+                    if menu_music_playing:
+                        pygame.mixer.music.stop()
+                        menu_music_playing = False
                     print("Settings clicked!")
                 elif exit_button_rect.collidepoint(event.pos):
-                    button_click_sound.play()  # Play button click sound
+                    button_click_sound.play()
+                    if menu_music_playing:
+                        pygame.mixer.music.stop()
+                        menu_music_playing = False
                     pygame.quit()
                     sys.exit()
 

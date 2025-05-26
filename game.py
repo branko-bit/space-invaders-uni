@@ -5,6 +5,9 @@ from pause import pause_menu   # Import the pause_menu function
 import random  # Import random for enemy spawn positions
 from game_over_screen import game_over_screen
 
+#spaceship sound by Knoplund on freesound.org
+#other sounds forgot to credit, sorry :(
+
 def game():
     pygame.init()
 
