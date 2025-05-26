@@ -111,6 +111,20 @@ def game():
 
     enemies_destroyed = 0  # Counter for destroyed enemies
 
+    # Boss settings
+    boss_image = pygame.image.load('Images/final-boss.png').convert_alpha()
+    boss_image = pygame.transform.scale(boss_image, (120, 120))  # Boss is bigger
+    boss_image = pygame.transform.rotate(boss_image, 180)  # Rotate the boss image
+    boss_hp_max = 100
+    boss_active = False
+    boss = None  # [x, y, dx, dy, hp]
+    boss_projectiles = []
+    boss_projectile_speed = projectile_speed * 1.2
+    boss_projectile_size = 21
+    boss_projectile_image = pygame.transform.scale(enemy_projectile_image, (boss_projectile_size*1.5, boss_projectile_size*3))
+    boss_spawned_at = 0
+    boss_last_shot = 0  # <-- dodano za boss cooldown
+
     running = True
     while running:
         #backgorund movement speed setting
@@ -303,10 +317,81 @@ def game():
                     player_hp -= 10  # Reduce player HP by 10
                 enemy_projectiles.remove(projectile)  # Remove the projectile
 
+        # Boss spawn logic
+        if not boss_active and enemies_destroyed > 0 and enemies_destroyed % 10 == 0:
+            boss_x = random.randint(0, 800 - 120)
+            boss_y = 10
+            boss_dx = random.uniform(0.08, 0.15) * random.choice([-1, 1])
+            boss_dy = random.uniform(0.05, 0.1)
+            boss = [boss_x, boss_y, boss_dx, boss_dy, boss_hp_max]
+            boss_active = True
+            boss_spawned_at = enemies_destroyed
+            boss_last_shot = time.time()  # reset cooldown
+
+        # Boss movement and drawing
+        if boss_active and boss:
+            boss[0] += boss[2]
+            boss[1] += boss[3]
+            # Keep boss within screen
+            if boss[0] <= 0 or boss[0] >= 800 - 120:
+                boss[2] = -boss[2]
+            if boss[1] <= 0 or boss[1] >= 700 * 0.3 - 120:
+                boss[3] = -boss[3]
+            screen.blit(boss_image, (boss[0], boss[1]))
+            # Boss health bar
+            boss_health_bar_width = 120
+            boss_health_bar_height = 12
+            boss_health_ratio = boss[4] / boss_hp_max
+            pygame.draw.rect(screen, (255, 0, 0), (boss[0], boss[1] - 18, boss_health_bar_width, boss_health_bar_height))
+            pygame.draw.rect(screen, (0, 0, 255), (boss[0], boss[1] - 18, boss_health_bar_width * boss_health_ratio, boss_health_bar_height))
+
+            # Boss fires one projectile every 1.5 seconds
+            if time.time() - boss_last_shot >= 1.5:
+                boss_projectiles.append([boss[0] + 60, boss[1] + 120])
+                boss_last_shot = time.time()
+
+        # Boss projectile movement
+        for bp in boss_projectiles:
+            bp[1] += boss_projectile_speed
+        boss_projectiles = [bp for bp in boss_projectiles if bp[1] < 700]
+
+        # Draw boss projectiles
+        for bp in boss_projectiles:
+            screen.blit(boss_projectile_image, (bp[0], bp[1]))
+
+        # Boss projectile collision with player
+        for bp in boss_projectiles[:]:
+            if spaceship_x < bp[0] < spaceship_x + spaceship_width and spaceship_y < bp[1] < spaceship_y + spaceship_height:
+                if shield_active:
+                    shield_active = False
+                else:
+                    player_hp -= 40  # Boss projectile does 40 damage
+                boss_projectiles.remove(bp)
+
+        # Boss hit by player projectile
+        if boss_active and boss:
+            for projectile in projectiles[:]:
+                if boss[0] - 10 < projectile[0] < boss[0] + 130 and boss[1] - 10 < projectile[1] < boss[1] + 130:
+                    boss[4] -= 10
+                    projectiles.remove(projectile)
+                    if boss[4] <= 0:
+                        boss_active = False
+                        boss = None
+                        high_score += 150
+                        rocket_count += 15
+                        shield_active = True
+                        shield_kill_counter = 0
+                        boss_projectiles.clear()
+                        enemies_destroyed += 1
+
         # If player HP reaches 0, stop the game and show the "Game Over" screen
         if player_hp <= 0:
-            game_over_screen(screen, high_score)  # Pass the screen and high score to the game over screen
-            return  # Exit the game loop and return to the main menu
+            # Reset boss state for next game
+            boss_active = False
+            boss = None
+            boss_projectiles.clear()
+            game_over_screen(screen, high_score)
+            return
 
         # Draw enemy projectiles
         for projectile in enemy_projectiles:
