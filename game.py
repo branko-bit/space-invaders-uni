@@ -10,7 +10,14 @@ from game_over_screen import game_over_screen
 #boss laugh sound by supersound23 on freesound.org
 #other sounds forgot to credit, sorry :(
 
-def game():
+def load_selected_ship():
+    try:
+        with open("selected_ship.txt", "r") as f:
+            return int(f.read().strip())
+    except:
+        return 1  # default
+
+def game(selected_ship=1):
     pygame.init()
 
     #game window
@@ -22,8 +29,8 @@ def game():
 
     #--------------PLAYER SECTION-----------------
     #load spaceship image
-    spaceship = pygame.image.load('Images/spaceship.png').convert_alpha()
-    spaceship = pygame.transform.scale(spaceship, (50, 50))  #50x50 pixels 
+    spaceship = pygame.image.load(f'Images/spaceship{selected_ship}.png').convert_alpha()
+    spaceship = pygame.transform.scale(spaceship, (100, 100))  #50x50 pixels 
     spaceship_width = spaceship.get_width()
     spaceship_height = spaceship.get_height()
 
