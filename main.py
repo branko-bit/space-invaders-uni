@@ -102,7 +102,15 @@ def save_leaderboard(leaderboard):
 
 def add_to_leaderboard(name, score):
     leaderboard = load_leaderboard()
-    leaderboard.append({"name": name, "score": score})
+    updated = False
+    for entry in leaderboard:
+        if entry["name"] == name:
+            if score > entry["score"]:
+                entry["score"] = score  # Update only if new score is higher
+            updated = True
+            break
+    if not updated:
+        leaderboard.append({"name": name, "score": score})
     leaderboard = sorted(leaderboard, key=lambda x: x["score"], reverse=True)[:10]  # Keep top 10
     save_leaderboard(leaderboard)
 
