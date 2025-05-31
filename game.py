@@ -17,7 +17,7 @@ def load_selected_ship():
     except:
         return 1  # default
 
-def game(selected_ship=1):
+def game(selected_ship=1, player_name="Player"):
     pygame.init()
 
     #game window
@@ -406,13 +406,8 @@ def game(selected_ship=1):
 
         # If player HP reaches 0, stop the game and show the "Game Over" screen
         if player_hp <= 0:
-            # Reset boss state for next game
-            boss_active = False
-            boss = None
-            boss_projectiles.clear()
-            pygame.mixer.music.stop()  # Stop the background music
             game_over_screen(screen, high_score)
-            return
+            return high_score  # Return score for leaderboard
 
         # Draw enemy projectiles
         for projectile in enemy_projectiles:
@@ -454,6 +449,7 @@ def game(selected_ship=1):
 
     #closing game
     pygame.quit()
+    return high_score  # In case game ends another way
 
 
 if __name__ == "__main__":
