@@ -20,6 +20,9 @@ def load_selected_ship():
 def game(selected_ship=1, player_name="Player"):
     pygame.init()
 
+    # clock for framerate independence using delta time
+    clock = pygame.time.Clock()
+
     #game window
     screen = pygame.display.set_mode((800, 700))  #width: x, height: y
     pygame.display.set_caption("Space Invaders")
@@ -38,15 +41,15 @@ def game(selected_ship=1, player_name="Player"):
     spaceship_x = (800 - spaceship_width) // 2 #center horizontally
     spaceship_y = 700 - spaceship_height - 10  # place near bottom of screen
 
-    #space ship movement speed
-    spaceship_speed = .5
+    #space ship movement speed (pixels per second)
+    spaceship_speed = 10  # was 0.5 per frame, now 300 per second
 
     #active projectiles list
     projectiles = []
-
+    
     #projectiles settings
     projectile_size = 60 # 9x9 pixel size
-    projectile_speed = .7
+    projectile_speed = 500  # was 0.7 per frame, now 500 per second
 
     #load projectile image + resize 
     projectile_image = pygame.image.load('Images/projectiles.png').convert_alpha()
@@ -65,6 +68,9 @@ def game(selected_ship=1, player_name="Player"):
     #background starting position
     background_y1 = 0
     background_y2 = -background.get_height()
+    
+    # Background scroll speed (pixels per second)
+    scroll_speed = 60  # was 0.1 per frame, now 60 per second
 
     # Player HP
     player_hp = 100
@@ -81,7 +87,7 @@ def game(selected_ship=1, player_name="Player"):
     enemies = []
     enemy_spawn_rate = 3  # spawn rate v sekundah
     last_enemy_spawn = 0  # Timestamp of the last enemy spawn
-    enemy_speed_range = (0.05, 0.2)  # Random speed range for movement
+    enemy_speed_range = (60, 200)  # was (0.05, 0.2) per frame, now 60-200 per second
     enemy_direction_change_rate = 1.0  # Change direction every 1 second
     last_direction_change = 0  # Timestamp of the last direction change
     enemy_projectile_size = 7
@@ -91,6 +97,9 @@ def game(selected_ship=1, player_name="Player"):
     enemy_projectile_image = pygame.transform.scale(enemy_projectile_image, (enemy_projectile_size, enemy_projectile_size*4))
     enemy_projectiles = []  # List to store enemy projectiles
     enemy_fire_intervals = {}  # Dictionary to track random fire intervals for each enemy
+    
+    # Enemy projectile speed (pixels per second)
+    enemy_projectile_speed = 350  # was 0.7 per frame, now 350 per second
 
     # High Score
     high_score = 0
@@ -111,6 +120,7 @@ def game(selected_ship=1, player_name="Player"):
     health_orb_image = pygame.image.load('Images/health.png').convert_alpha()
     health_orb_image = pygame.transform.scale(health_orb_image, (50, 50))  # Bigger orb
     health_orbs = []  # List to store active health orbs
+    health_orb_speed = 90
     
     # Load ammo drop image
     ammo_drop_image = pygame.image.load('Images/ammo_drop.png').convert_alpha()
@@ -119,7 +129,7 @@ def game(selected_ship=1, player_name="Player"):
     ammo_drops = []
     ammo_drop_spawn_rate = 10  # seconds between possible spawns
     last_ammo_drop_spawn = 0
-    ammo_drop_speed = 0.1
+    ammo_drop_speed = 80  # was 0.1 per frame, now 80 per second
     ammo_drop_spawn_chance = 0.35; # 35%
 
     # Load heal sound
@@ -146,10 +156,12 @@ def game(selected_ship=1, player_name="Player"):
 
     running = True
     while running:
+        # Calculate delta time (in seconds)
+        dt = clock.tick(60) / 1000.0  # 60 FPS cap, dt in seconds
+        
         #backgorund movement speed setting
-        scroll_speed = 0.1
-        background_y1 += scroll_speed
-        background_y2 += scroll_speed
+        background_y1 += scroll_speed * dt
+        background_y2 += scroll_speed * dt
 
         #resetting background image for movement effect
         if background_y1 >= background.get_height():
@@ -180,7 +192,7 @@ def game(selected_ship=1, player_name="Player"):
         
         #updating projectile positions
         for projectile in projectiles:
-            projectile[1] -= projectile_speed  #moving up
+            projectile[1] -= projectile_speed * dt  #moving up
 
         #removing projectiles that are no longer visible
         projectiles = [p for p in projectiles if p[1] > 0]
@@ -237,8 +249,8 @@ def game(selected_ship=1, player_name="Player"):
             last_direction_change = current_time
 
         for enemy in enemies:
-            enemy[0] += enemy[2]  # Move enemy horizontally
-            enemy[1] += enemy[3]  # Move enemy vertically
+            enemy[0] += enemy[2] * dt  # Move enemy horizontally
+            enemy[1] += enemy[3] * dt  # Move enemy vertically
 
             # Keep enemies within the top 30% of the screen
             if enemy[0] <= 0 or enemy[0] >= 800 - 50:
@@ -270,11 +282,11 @@ def game(selected_ship=1, player_name="Player"):
 
         # Update and draw health orbs
         for orb in health_orbs:
-            orb[1] += 0.08  # Slower descent speed
+            orb[1] += health_orb_speed * dt  # was 0.08 per frame, now 40 per second
 
         # Update ammo drops
         for drop in ammo_drops:
-            drop[1] += ammo_drop_speed  # Move down
+            drop[1] += ammo_drop_speed * dt  # Move down
 
         # Check for collision between player and health orbs
         for orb in health_orbs[:]:
@@ -322,7 +334,7 @@ def game(selected_ship=1, player_name="Player"):
 
         # Update enemy projectile positionsa
         for projectile in enemy_projectiles:
-            projectile[1] += projectile_speed  # Move downward
+            projectile[1] += enemy_projectile_speed * dt  # Move downward
 
         # Remove enemy projectiles that move off-screen
         enemy_projectiles = [p for p in enemy_projectiles if p[1] < 700]
@@ -350,8 +362,8 @@ def game(selected_ship=1, player_name="Player"):
 
         # Boss movement and drawing
         if boss_active and boss:
-            boss[0] += boss[2]
-            boss[1] += boss[3]
+            boss[0] += boss[2] * dt
+            boss[1] += boss[3] * dt
             # Keep boss within screen
             if boss[0] <= 0 or boss[0] >= 800 - 120:
                 boss[2] = -boss[2]
@@ -372,7 +384,7 @@ def game(selected_ship=1, player_name="Player"):
 
         # Boss projectile movement
         for bp in boss_projectiles:
-            bp[1] += boss_projectile_speed
+            bp[1] += boss_projectile_speed * dt
         boss_projectiles = [bp for bp in boss_projectiles if bp[1] < 700]
 
         # Draw boss projectiles
