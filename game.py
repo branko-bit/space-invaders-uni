@@ -8,6 +8,8 @@ from game_over_screen import game_over_screen
 #spaceship sound by Knoplund on freesound.org
 #space sound by VABsounds on freesound.org
 #boss laugh sound by supersound23 on freesound.org
+#hit sound by SoundsnapFX on freesound.org
+#boss sound by qubodup on freesound.org
 #other sounds forgot to credit, sorry :(
 
 def load_selected_ship():
@@ -80,6 +82,13 @@ def game(selected_ship=1, player_name="Player"):
     rocket_count = 25 # Initial rocket count
     rocket_font = pygame.font.Font(None, 36)  # Font for displaying rocket count
 
+    # Load hit sound
+    hit_sound = pygame.mixer.Sound('Sounds/hitsound.wav')
+
+    # Load boss taunt sound
+    boss_taunt_sound = pygame.mixer.Sound('Sounds/bosssound.wav')
+    boss_taunt_sound.set_volume(1.0)  # (optional) set volume
+
     #---------------ENEMY SECTION------------------
     # Enemy settings
     enemy_image = pygame.image.load('Images/enemy.png').convert_alpha()
@@ -150,9 +159,13 @@ def game(selected_ship=1, player_name="Player"):
     boss_projectile_image = pygame.transform.scale(enemy_projectile_image, (boss_projectile_size*1.5, boss_projectile_size*3))
     boss_spawned_at = 0
     boss_last_shot = 0  # <-- dodano za boss cooldown
+    boss_last_taunt = 0  # Time of last taunt
 
     # Load boss spawn sound
     boss_spawn_sound = pygame.mixer.Sound('Sounds/boss-spawn.wav')
+
+    # For floating +10 score text
+    floating_texts = []
 
     running = True
     while running:
@@ -263,9 +276,17 @@ def game(selected_ship=1, player_name="Player"):
             for enemy in enemies[:]:
                 # Increase the hitbox by expanding the collision area
                 if enemy[0] - 10 < projectile[0] < enemy[0] + 60 and enemy[1] - 10 < projectile[1] < enemy[1] + 60:
+                    hit_sound.play()  # Play hit sound
                     enemy[4] -= 10  # Reduce enemy HP by 10
                     projectiles.remove(projectile)  # Remove the projectile
                     if enemy[4] <= 0:  # If enemy HP reaches 0, remove the enemy
+                        # Add floating +10 text at enemy position
+                        floating_texts.append({
+                            "text": "+10",
+                            "x": int(enemy[0] + 25),  # center more above enemy
+                            "y": int(enemy[1] - 20),
+                            "start_time": time.time()
+                        })
                         enemies.remove(enemy)
                         high_score += 10  # Increase high score by 10
                         rocket_count += 4  # Award 4 rockets for killing an enemy
@@ -326,6 +347,22 @@ def game(selected_ship=1, player_name="Player"):
             pygame.draw.rect(screen, (255, 0, 0), (enemy[0], enemy[1] - 10, health_bar_width, health_bar_height))  # Red background
             pygame.draw.rect(screen, health_bar_color, (enemy[0], enemy[1] - 10, health_bar_width * health_ratio, health_bar_height))  # Green foreground
 
+        # Draw floating +10 texts
+        for ft in floating_texts[:]:
+            elapsed = time.time() - ft["start_time"]
+            if elapsed < 2.0:
+                float_y = ft["y"] - (elapsed * 30)  # Move up over time
+                float_alpha = max(0, 255 - int(elapsed * 120))  # Fade out
+                float_surface = score_font.render(ft["text"], True, (0, 255, 0))
+                float_surface.set_alpha(float_alpha)
+                # Draw with a black outline for visibility
+                outline = score_font.render(ft["text"], True, (0, 0, 0))
+                for ox, oy in [(-1,0),(1,0),(0,-1),(0,1)]:
+                    screen.blit(outline, (ft["x"]+ox, float_y+oy))
+                screen.blit(float_surface, (ft["x"], float_y))
+            else:
+                floating_texts.remove(ft)
+
         # Enemies fire projectiles at random intervals
         for i, enemy in enumerate(enemies):
             if i in enemy_fire_intervals and current_time >= enemy_fire_intervals[i]:
@@ -382,6 +419,16 @@ def game(selected_ship=1, player_name="Player"):
                 boss_projectiles.append([boss[0] + 60, boss[1] + 120])
                 boss_last_shot = time.time()
 
+            # Boss taunt every 10 seconds, play only 3 seconds
+            if time.time() - boss_last_taunt >= 10:
+                boss_taunt_sound.play()
+                boss_taunt_start = time.time()
+                boss_last_taunt = boss_taunt_start
+            # Stop taunt after 3 seconds
+            if 'boss_taunt_start' in locals() and boss_taunt_sound.get_num_channels() > 0:
+                if time.time() - boss_taunt_start >= 3:
+                    boss_taunt_sound.stop()
+
         # Boss projectile movement
         for bp in boss_projectiles:
             bp[1] += boss_projectile_speed * dt
@@ -404,6 +451,7 @@ def game(selected_ship=1, player_name="Player"):
         if boss_active and boss:
             for projectile in projectiles[:]:
                 if boss[0] - 10 < projectile[0] < boss[0] + 130 and boss[1] - 10 < projectile[1] < boss[1] + 130:
+                    hit_sound.play()  # Play hit sound
                     boss[4] -= 10
                     projectiles.remove(projectile)
                     if boss[4] <= 0:
