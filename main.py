@@ -2,6 +2,8 @@ import pygame
 import sys
 import subprocess  
 import game
+import json
+import os
 pygame.init()
 
 SCREEN_WIDTH = 800
@@ -33,6 +35,8 @@ button_click_sound = pygame.mixer.Sound('Sounds/button_click.wav')
 pygame.mixer.music.load('Sounds/main-menu.wav')  # Dodaj svojo glasbeno datoteko v Sounds/
 pygame.mixer.music.set_volume(1.0)  # Set to maximum volume (100%)
 pygame.mixer.music.play(-1)  # Loop indefinitely
+
+LEADERBOARD_FILE = "leaderboard.json"
 
 def draw_text(text, font, color, surface, x, y):
     text_obj = font.render(text, True, color)
@@ -80,9 +84,82 @@ def spaceship_settings_menu():
                     return
         pygame.display.flip()
 
+def load_leaderboard():
+    if not os.path.exists(LEADERBOARD_FILE):
+        return []
+    try:
+        with open(LEADERBOARD_FILE, "r", encoding="utf-8") as f:
+            data = f.read().strip()
+            if not data:
+                return []
+            return json.loads(data)
+    except Exception:
+        return []
+
+def save_leaderboard(leaderboard):
+    with open(LEADERBOARD_FILE, "w", encoding="utf-8") as f:
+        json.dump(leaderboard, f, indent=2)
+
+def add_to_leaderboard(name, score):
+    leaderboard = load_leaderboard()
+    updated = False
+    for entry in leaderboard:
+        if entry["name"] == name:
+            if score > entry["score"]:
+                entry["score"] = score  # Update only if new score is higher
+            updated = True
+            break
+    if not updated:
+        leaderboard.append({"name": name, "score": score})
+    leaderboard = sorted(leaderboard, key=lambda x: x["score"], reverse=True)[:10]  # Keep top 10
+    save_leaderboard(leaderboard)
+
+def leaderboard_screen(surface, leaderboard):
+    # Lower the leaderboard by increasing the y-coordinates
+    draw_text("Leaderboard", BUTTON_FONT, WHITE, surface, 150, 180)  # was 120
+    for idx, entry in enumerate(leaderboard[:10]):
+        text = f"{idx+1}. {entry['name']} - {entry['score']}"
+        draw_text(text, BUTTON_FONT, WHITE, surface, 150, 220 + idx * 30)  # was 160 + idx*30
+
+def name_input_screen():
+    input_box = pygame.Rect(SCREEN_WIDTH // 2 - 150, SCREEN_HEIGHT // 2 - 25, 300, 50)
+    color_inactive = pygame.Color('lightskyblue3')
+    color_active = pygame.Color('dodgerblue2')
+    color = color_inactive
+    active = False
+    text = ""
+    done = False
+    while not done:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if input_box.collidepoint(event.pos):
+                    active = True
+                else:
+                    active = False
+            if event.type == pygame.KEYDOWN:
+                if active:
+                    if event.key == pygame.K_RETURN:
+                        if text.strip():
+                            return text.strip()
+                    elif event.key == pygame.K_BACKSPACE:
+                        text = text[:-1]
+                    elif len(text) < 12:
+                        text += event.unicode
+        color = color_active if active else color_inactive
+        screen.blit(background_image, (0, 0))
+        draw_text("Enter your name:", BUTTON_FONT, WHITE, screen, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 60)
+        pygame.draw.rect(screen, color, input_box, 2)
+        txt_surface = BUTTON_FONT.render(text, True, WHITE)
+        screen.blit(txt_surface, (input_box.x + 10, input_box.y + 10))
+        pygame.display.flip()
+
 def main_menu():
     global selected_ship
     menu_music_playing = True
+    leaderboard = load_leaderboard()
     while True:
         screen.blit(background_image, (0, 0)) 
 
@@ -102,6 +179,9 @@ def main_menu():
         screen.blit(settings_icon, (settings_button_rect.x, settings_button_rect.y))
         screen.blit(exit_icon, (exit_button_rect.x, exit_button_rect.y))
 
+        # Draw leaderboard on the left side
+        leaderboard_screen(screen, leaderboard)
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.mixer.music.stop()
@@ -113,8 +193,12 @@ def main_menu():
                     if menu_music_playing:
                         pygame.mixer.music.stop()
                         menu_music_playing = False
-                    print("Play Game clicked!")
-                    game.game(selected_ship)
+                    player_name = name_input_screen()
+                    # Play the game and get the score
+                    score = game.game(selected_ship, player_name)
+                    if score is not None:
+                        add_to_leaderboard(player_name, score)
+                        leaderboard = load_leaderboard()
                 elif spaceship_settings_button.collidepoint(event.pos):
                     button_click_sound.play()
                     spaceship_settings_menu()
