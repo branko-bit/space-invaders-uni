@@ -30,7 +30,7 @@ def game(selected_ship=1):
     #--------------PLAYER SECTION-----------------
     #load spaceship image
     spaceship = pygame.image.load(f'Images/spaceship{selected_ship}.png').convert_alpha()
-    spaceship = pygame.transform.scale(spaceship, (100, 100))  #50x50 pixels 
+    spaceship = pygame.transform.scale(spaceship, (50, 50))  #50x50 pixels 
     spaceship_width = spaceship.get_width()
     spaceship_height = spaceship.get_height()
 
@@ -336,8 +336,8 @@ def game(selected_ship=1):
                     player_hp -= 10  # Reduce player HP by 10
                 enemy_projectiles.remove(projectile)  # Remove the projectile
 
-        # Boss spawn logic
-        if not boss_active and enemies_destroyed > 0 and enemies_destroyed % 10 == 0:
+        # Boss spawn logic 
+        if not boss_active and enemies_destroyed > 0 and enemies_destroyed % 3 == 0:
             boss_x = random.randint(0, 800 - 120)
             boss_y = 10
             boss_dx = random.uniform(0.08, 0.15) * random.choice([-1, 1])
